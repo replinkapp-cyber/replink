@@ -8,6 +8,7 @@
     <div class="reg-content">
       <div class="section">
         <label class="section-title">사진 *</label>
+        <p class="section-desc">사진을 클릭하여 등록해 주세요 (최대 3장)</p>
         <div class="photo-grid">
           <div v-for="(img, i) in previewUrls" :key="i" class="photo-box">
             <img :src="img" />
@@ -31,7 +32,7 @@
         <div class="row-item">
           <label class="section-title">체중</label>
           <div class="input-with-unit">
-            <input v-model="form.weight" type="number" placeholder="0" class="main-input p-right-unit" />
+            <input v-model="form.weight" type="number" placeholder="0" class="main-input p-right" />
             <span class="unit-text">g</span>
           </div>
         </div>
@@ -62,6 +63,7 @@
             :class="{ active: form.size === sz }" @click="form.size = sz">{{ sz }}</button>
         </div>
       </div>
+
       <div class="section">
         <label class="section-title">성별 *</label>
         <div class="segmented-control">
@@ -122,8 +124,8 @@
           <div v-if="!tempSpecies" class="species-step-area">
             <div v-for="(species, groupName) in common.speciesGroups" :key="groupName" class="group-section">
               <h4 class="group-title">{{ groupName }}</h4>
-              <div class="species-chips">
-                <button v-for="s in species" :key="s" @click="selectSpeciesStep(s)">{{ s }}</button>
+              <div class="chip-grid">
+                <button v-for="s in species" :key="s" class="chip-btn" @click="selectSpeciesStep(s)">{{ s }}</button>
               </div>
             </div>
           </div>
@@ -139,16 +141,16 @@
               <div class="morph-header">
                 <span class="morph-label">모프 선택 (최대 3개)</span>
               </div>
-              <div class="morph-chips">
+              <div class="chip-grid">
                 <button v-for="m in filteredMorphs" :key="m" 
-                  :class="{ selected: tempMorphs.includes(m) }" @click="toggleTempMorph(m)">{{ m }}</button>
+                  class="chip-btn" :class="{ selected: tempMorphs.includes(m) }" @click="toggleTempMorph(m)">{{ m }}</button>
               </div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="reset-btn" @click="resetModalSelection">초기화</button>
-          <button class="apply-btn" @click="applySpeciesMorph">적용하기</button>
+          <button class="m-btn reset" @click="resetModalSelection">초기화</button>
+          <button class="m-btn apply" @click="applySpeciesMorph">적용하기</button>
         </div>
       </div>
     </div>
@@ -166,7 +168,6 @@
           <div v-if="parentMode === 'select'">
             <div class="search-container">
               <input type="text" v-model="parentSearchQuery" placeholder="이름 검색" class="search-input" />
-              <span class="search-icon">🔍</span>
             </div>
             <div class="parent-list">
               <div v-for="item in searchedParentList" :key="item.id" class="p-list-item" @click="selectParent(item)">
@@ -178,9 +179,6 @@
                   <span class="p-morphs">{{ item.morphs?.join(', ') || '노말' }}</span>
                 </div>
                 <div class="p-select-indicator">선택</div>
-              </div>
-              <div v-if="searchedParentList.length === 0" class="no-parent-data">
-                <p>{{ targetGender }} 개체를 등록하면 연결할 수 있어요</p>
               </div>
             </div>
           </div>
@@ -196,8 +194,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button class="reset-btn" @click="showParentModal = false">취소</button>
-          <button v-if="parentMode === 'manual'" class="apply-btn" @click="applyManualParent">등록하기</button>
+          <button class="m-btn reset" @click="showParentModal = false">취소</button>
+          <button v-if="parentMode === 'manual'" class="m-btn apply" @click="applyManualParent">등록하기</button>
         </div>
       </div>
     </div>
@@ -334,108 +332,81 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-/* [핵심] 레이아웃 깨짐 방지 강제 설정 */
+/* [핵심] 모든 요소에 박스 크기 계산 방식 고정 */
 * { box-sizing: border-box !important; }
-.reg-container { width: 600px !important; margin: 0 auto !important; background: #fff; }
 
-/* 이미지에서 보신 둥근 버튼(칩) 스타일 전역 선언 */
-button.chip-style, .species-chips button, .morph-chips button {
-  padding: 10px 18px; border-radius: 25px; border: 1px solid #eee;
-  background: #fff; font-size: 14px; cursor: pointer; transition: 0.2s;
+.reg-container { 
+  width: 600px !important; 
+  max-width: 100% !important; 
+  margin: 0 auto !important; 
+  background: #fff; 
+  min-height: 100vh; 
+  padding-bottom: 50px;
 }
-/* 활성화 시 색상 고정 */
-button.chip-style.active { border-color: #42b883; color: #42b883; font-weight: 700; }
-button.chip-style.selected { background: #eef5ff; color: #3182f6; border-color: #3182f6; font-weight: 700; }
-
-
 
 .reg-header { height: 60px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; background: #fff; z-index: 100; }
 .header-title { font-size: 18px; font-weight: 700; color: #333; }
 .back-btn { position: absolute; left: 15px; background: none; border: none; font-size: 20px; color: #555; cursor: pointer; }
 .reg-content { padding: 24px; }
+
+/* 섹션 공통 */
 .section { margin-bottom: 28px; width: 100%; }
 .section-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; display: block; color: #444; }
 
-/* 가로 배치 레이아웃 (해칭일/체중, 부모) */
-.section-row, .parent-grid { display: flex; gap: 15px; width: 100%; flex-wrap: nowrap !important; }
-.row-item, .parent-column { flex: 1; min-width: 0; }
+/* [해칭일 & 체중] 겹침 방지 가로 배치 */
+.section-row { display: flex; gap: 15px; width: 100%; }
+.row-item { flex: 1; min-width: 0; }
 
-/* 공통 입력창 스타일 */
-.main-input { width: 100%; height: 48px; padding: 0 14px; border: 1px solid #e1e1e1; border-radius: 12px; background: #f8f9fa; font-size: 15px; outline: none; }
+/* 메인 인풋 스타일 */
+.main-input { 
+  width: 100%; height: 48px; padding: 0 14px; border: 1px solid #e1e1e1; border-radius: 12px; background: #f8f9fa; font-size: 15px; outline: none; 
+}
+
+/* 체중 단위 정렬 */
 .input-with-unit { position: relative; width: 100%; }
-.p-right-unit { padding-right: 35px !important; }
-.unit-text { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #adb5bd; font-weight: 600; font-size: 14px; }
+.p-right { padding-right: 35px !important; }
+.unit-text { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #adb5bd; font-weight: 600; }
 
-/* 종 & 모프 선택 트리거 박스 (메인) */
-.morph-trigger-box { border: 1px solid #e1e1e1; border-radius: 12px; background: #f8f9fa; padding: 12px 14px; cursor: pointer; min-height: 58px; display: flex; align-items: center; }
-.species-badge { background: #333; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; flex-shrink: 0; margin-right: 8px; }
-.chip-tag { background: #eef5ff; color: #3182f6; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #d0e3ff; }
+/* [종 & 모프 선택 - 디자인 복구] */
+.morph-trigger-box { border: 1px solid #e1e1e1; border-radius: 12px; background: #f8f9fa; padding: 12px 14px; cursor: pointer; min-height: 58px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.selected-display { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.species-badge { background: #333; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.selected-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-tag { background: #eef5ff; color: #3182f6; padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: 600; border: 1px solid #d0e3ff; }
 
-/* 부모 정보 박스 디자인 */
+/* [부모 정보 박스 디자인 복구] */
+.parent-grid { display: flex; gap: 12px; width: 100%; }
+.parent-column { flex: 1; min-width: 0; }
 .parent-box-styled { 
   width: 100%; height: 100px; background-color: #f8f9fa; border-radius: 12px; border: 1px solid #f0f0f0; 
   display: flex; flex-direction: column; align-items: center; justify-content: center; 
   cursor: pointer; position: relative; overflow: hidden;
 }
-.help-circle { width: 22px; height: 22px; border-radius: 50%; background: #dee2e6; color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; }
 .p-label-overlay { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.5); padding: 5px 0; text-align: center; }
 .p-name-txt { color: #fff; font-weight: 700; font-size: 13px; }
+.help-circle { width: 22px; height: 22px; border-radius: 50%; background: #dee2e6; color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; margin-top: 5px; }
 
-/* [모달 스타일 보정] 이미지와 똑같은 버튼 스타일 복구 */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 2000; }
-.modal-content.full-modal { width: 100%; max-width: 600px; height: 90vh; border-radius: 24px 24px 0 0; background: #fff; display: flex; flex-direction: column; padding: 24px; }
-.modal-body-scroll { flex: 1; overflow-y: auto; padding: 10px 0; }
-
-/* 칩 스타일 버튼 (종/모프 공통) */
-.species-chips button, .morph-chips button { 
-  padding: 10px 18px; border-radius: 25px; border: 1px solid #eee; background: #fff; 
-  margin: 4px; font-size: 14px; cursor: pointer; color: #555; transition: 0.2s;
+/* [모달 칩 버튼 - 디자인 동기화] */
+.chip-btn {
+  padding: 10px 18px; border-radius: 25px; border: 1px solid #eee;
+  background: #fff; margin: 4px; font-size: 14px; cursor: pointer; color: #555;
 }
-/* 종 선택 시 (초록색 테두리 버전 이미지 참고) */
-.species-chips button.active { border-color: #42b883; color: #42b883; font-weight: 700; }
-/* 모프 선택 시 (파란색 버전) */
-.morph-chips button.selected { background: #eef5ff; color: #3182f6; border-color: #3182f6; font-weight: 700; }
+.chip-btn.selected { background: #eef5ff; color: #3182f6; border-color: #3182f6; font-weight: 700; }
 
-/* 모달 탭 (내 개체 선택 / 직접 등록) */
-.parent-modal-tabs { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
-.tab-btn { 
-  background: none; border: none; font-size: 16px; color: #bbb; cursor: pointer; 
-  padding: 10px 5px; position: relative;
-}
-.tab-btn.active { color: #3182f6; font-weight: 700; }
-.tab-btn.active::after { 
-  content: ""; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: #3182f6; 
-}
+/* 모달 하단 버튼 */
+.modal-footer { display: flex; gap: 10px; padding: 20px 0; border-top: 1px solid #eee; margin-top: auto; }
+.m-btn { flex: 1; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; }
+.m-btn.reset { background: #f1f3f5; color: #666; }
+.m-btn.apply { background: #3182f6; color: #fff; flex: 2; }
 
-/* 검색창 */
-.search-container { position: relative; margin-bottom: 15px; }
-.search-input { width: 100%; height: 44px; padding: 0 40px 0 15px; border: 1px solid #eee; border-radius: 10px; background: #f8f9fa; outline: none; }
-.search-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #aaa; }
-
-/* 모달 하단 초기화/적용하기 버튼 */
-.modal-footer { padding: 20px 0; display: flex; gap: 10px; border-top: 1px solid #eee; margin-top: auto; }
-.reset-btn { 
-  flex: 1; padding: 16px; border: 1px solid #eee; border-radius: 12px; background: #f8f9fa; 
-  color: #666; font-weight: 600; cursor: pointer; font-size: 15px;
-}
-.apply-btn { 
-  flex: 2; padding: 16px; background: #3182f6; color: #fff; border: none; 
-  border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 15px;
-}
-
-/* 성별/크기 세그먼트 컨트롤 */
+/* 기타 UI */
 .segmented-control { display: flex; gap: 6px; background: #f1f3f5; padding: 4px; border-radius: 12px; }
-.segmented-control button { flex: 1; padding: 12px 0; border: none; border-radius: 10px; background: transparent; color: #888; font-weight: 600; cursor: pointer; font-size: 14px; }
+.segmented-control button { flex: 1; padding: 12px 0; border: none; border-radius: 10px; background: transparent; color: #888; font-weight: 600; cursor: pointer; }
 .segmented-control button.active { background: #3182f6; color: white; }
 
-/* 사진 업로드 영역 */
-.photo-grid { display: flex; gap: 10px; flex-wrap: wrap; }
-.photo-box { width: 85px; height: 85px; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid #eee; }
-.photo-box img { width: 100%; height: 100%; object-fit: cover; }
-.upload-box { width: 85px; height: 85px; background: #f8f9fa; border: 1px solid #eee; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 2000; }
+.modal-content.full-modal { width: 100%; max-width: 600px; height: 90vh; border-radius: 24px 24px 0 0; background: #fff; display: flex; flex-direction: column; padding: 24px; }
+.modal-body-scroll { flex: 1; overflow-y: auto; }
 
-/* 직접 등록 수동 입력 영역 */
-.manual-photo-box { width: 110px; height: 110px; background: #f8f9fa; border: 2px dashed #eee; border-radius: 15px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; text-align: center; color: #aaa; font-size: 12px; }
-
-.submit-btn { width: 100%; padding: 18px; background: #42b883; color: #fff; border: none; border-radius: 12px; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+.submit-btn { width: 100%; padding: 18px; background: #42b883; color: white; border: none; border-radius: 12px; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 10px; }
 </style>
