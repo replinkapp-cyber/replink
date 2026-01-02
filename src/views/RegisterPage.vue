@@ -24,7 +24,7 @@
         </div>
       </div>
 
-      <div class="section-row">
+      <div class="section-row flex-nowrap">
         <div class="row-item">
           <label class="section-title">해칭일</label>
           <input v-model="form.hatchDate" type="date" class="main-input date-input" />
@@ -63,7 +63,6 @@
             :class="{ active: form.size === sz }" @click="form.size = sz">{{ sz }}</button>
         </div>
       </div>
-
       <div class="section">
         <label class="section-title">성별 *</label>
         <div class="segmented-control">
@@ -73,7 +72,7 @@
       </div>
 
       <div class="section">
-        <div class="parent-grid">
+        <div class="parent-grid flex-nowrap">
           <div class="parent-column" @click="openParentModal('수컷')">
             <label class="section-title">부 (Father)</label>
             <div class="parent-box-styled" :style="form.fatherPhoto ? `background-image:url(${form.fatherPhoto}); background-size:cover; background-position:center;` : ''">
@@ -129,13 +128,11 @@
               </div>
             </div>
           </div>
+
           <div v-else class="morph-step-area">
-            <div class="selected-species-banner">
-              <div class="banner-left">
-                <span class="label">선택된 종</span>
-                <span class="value">{{ tempSpecies }}</span>
-              </div>
-              <button class="change-btn" @click="tempSpecies = ''">변경</button>
+            <div class="selected-banner">
+              <div class="banner-info">선택된 종: <b>{{ tempSpecies }}</b></div>
+              <button class="change-btn-styled" @click="tempSpecies = ''">변경</button>
             </div>
             <div class="morph-selection-content">
               <div class="morph-header">
@@ -159,15 +156,15 @@
       <div class="modal-content full-modal">
         <div class="modal-header border-none">
           <button class="close-x" @click="showParentModal = false">✕</button>
-          <div class="parent-modal-tabs">
-            <button class="tab-btn" :class="{ active: parentMode === 'select' }" @click="parentMode = 'select'">내 개체 선택</button>
-            <button class="tab-btn" :class="{ active: parentMode === 'manual' }" @click="parentMode = 'manual'">직접 등록</button>
+          <div class="parent-tabs-styled">
+            <button class="tab-btn-styled" :class="{ active: parentMode === 'select' }" @click="parentMode = 'select'">내 개체 선택</button>
+            <button class="tab-btn-styled" :class="{ active: parentMode === 'manual' }" @click="parentMode = 'manual'">직접 등록</button>
           </div>
         </div>
         <div class="modal-body-scroll">
           <div v-if="parentMode === 'select'">
-            <div class="search-container">
-              <input type="text" v-model="parentSearchQuery" placeholder="이름 검색" class="search-input" />
+            <div class="search-container-styled">
+              <input type="text" v-model="parentSearchQuery" placeholder="이름 검색" class="search-input-styled" />
             </div>
             <div class="parent-list">
               <div v-for="item in searchedParentList" :key="item.id" class="p-list-item" @click="selectParent(item)">
@@ -180,8 +177,12 @@
                 </div>
                 <div class="p-select-indicator">선택</div>
               </div>
+              <div v-if="searchedParentList.length === 0" class="no-parent-data">
+                <p>{{ targetGender }} 개체를 등록하면 연결할 수 있어요</p>
+              </div>
             </div>
           </div>
+
           <div v-else class="manual-entry-area">
             <div class="manual-photo-upload">
               <label class="manual-photo-box">
@@ -190,7 +191,10 @@
                 <div v-else class="cam-guide">📷<br>사진 등록</div>
               </label>
             </div>
-            <input v-model="manualParent.name" type="text" placeholder="부모 이름을 입력해 주세요" class="main-input" />
+            <div class="manual-input-group">
+              <label class="section-title">개체 이름</label>
+              <input v-model="manualParent.name" type="text" placeholder="부모 개체 이름을 입력해 주세요" class="main-input" />
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -214,6 +218,7 @@ const common = useCommonStore();
 const router = useRouter();
 const loading = ref(false);
 
+// --- 폼 데이터 상태 ---
 const form = reactive({
   name: '', species: '', morphs: [], gender: '미구분', size: '베이비',
   fatherId: '', fatherName: '', fatherPhoto: '', fatherPhotoFile: null,
@@ -221,6 +226,7 @@ const form = reactive({
   hatchDate: '', weight: '', description: ''
 });
 
+// --- 모달 및 검색 관련 상태 ---
 const showSpeciesMorphModal = ref(false);
 const showParentModal = ref(false);
 const targetGender = ref('');
@@ -233,11 +239,13 @@ const tempMorphs = ref([]);
 const previewUrls = ref([]);
 const selectedFiles = ref([]);
 
+// 데이터 로드
 onMounted(async () => {
   const snap = await getDocs(collection(db, "reptiles"));
   allMyReptiles.value = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 });
 
+// --- 종 & 모프 로직 ---
 const openSpeciesMorphModal = () => {
   tempSpecies.value = form.species;
   tempMorphs.value = [...form.morphs];
@@ -248,7 +256,7 @@ const toggleTempMorph = (m) => {
   const idx = tempMorphs.value.indexOf(m);
   if (idx > -1) tempMorphs.value.splice(idx, 1);
   else {
-    if (tempMorphs.value.length >= 3) return alert("최대 3개 선택 가능");
+    if (tempMorphs.value.length >= 3) return alert("모프는 최대 3개까지만 선택 가능합니다.");
     tempMorphs.value.push(m);
   }
 };
@@ -260,8 +268,9 @@ const applySpeciesMorph = () => {
 const resetModalSelection = () => { tempSpecies.value = ''; tempMorphs.value = []; };
 const filteredMorphs = computed(() => common.getMorphsBySpecies(tempSpecies.value));
 
+// --- 부모 모달 로직 ---
 const openParentModal = (gender) => {
-  if (!form.species) return alert("종을 먼저 선택하세요.");
+  if (!form.species) return alert("종을 먼저 선택해 주세요.");
   targetGender.value = gender;
   parentMode.value = 'select';
   parentSearchQuery.value = '';
@@ -270,10 +279,13 @@ const openParentModal = (gender) => {
 };
 const onParentPhotoChange = (e) => {
   const file = e.target.files[0];
-  if (file) { manualParent.photoFile = file; manualParent.photoUrl = URL.createObjectURL(file); }
+  if (file) {
+    manualParent.photoFile = file;
+    manualParent.photoUrl = URL.createObjectURL(file);
+  }
 };
 const applyManualParent = () => {
-  if (!manualParent.name) return alert("이름 필수");
+  if (!manualParent.name) return alert("개체 이름을 입력해 주세요.");
   if (targetGender.value === '수컷') {
     form.fatherName = manualParent.name; form.fatherId = 'manual';
     form.fatherPhoto = manualParent.photoUrl; form.fatherPhotoFile = manualParent.photoFile;
@@ -294,17 +306,25 @@ const selectParent = (item) => {
   showParentModal.value = false;
 };
 const searchedParentList = computed(() => {
-  return allMyReptiles.value.filter(r => r.species === form.species && r.gender === targetGender.value && r.name.includes(parentSearchQuery.value));
+  return allMyReptiles.value.filter(r => 
+    r.species === form.species && 
+    r.gender === targetGender.value && 
+    r.name.toLowerCase().includes(parentSearchQuery.value.toLowerCase())
+  );
 });
 
+// --- 사진 업로드 및 등록 ---
 const onFileChange = (e) => {
   const files = Array.from(e.target.files);
-  files.forEach(f => { selectedFiles.value.push(f); previewUrls.value.push(URL.createObjectURL(f)); });
+  files.forEach(f => {
+    selectedFiles.value.push(f);
+    previewUrls.value.push(URL.createObjectURL(f));
+  });
 };
 const removePhoto = (i) => { selectedFiles.value.splice(i, 1); previewUrls.value.splice(i, 1); };
 
 const handleRegister = async () => {
-  if (!form.name || !form.species || form.morphs.length === 0) return alert("필수 항목 입력");
+  if (!form.name || !form.species || form.morphs.length === 0) return alert("필수 항목(*)을 입력해 주세요.");
   loading.value = true;
   try {
     const photoUrls = [];
@@ -313,26 +333,36 @@ const handleRegister = async () => {
       await uploadBytes(sRef, f);
       photoUrls.push(await getDownloadURL(sRef));
     }
+    // 부모 사진이 로컬 파일인 경우 업로드
     if (form.fatherPhotoFile) {
-      const fRef = storageRef(storage, `parents/${Date.now()}_f`);
+      const fRef = storageRef(storage, `parents/${Date.now()}_father`);
       await uploadBytes(fRef, form.fatherPhotoFile);
       form.fatherPhoto = await getDownloadURL(fRef);
     }
     if (form.motherPhotoFile) {
-      const mRef = storageRef(storage, `parents/${Date.now()}_m`);
+      const mRef = storageRef(storage, `parents/${Date.now()}_mother`);
       await uploadBytes(mRef, form.motherPhotoFile);
       form.motherPhoto = await getDownloadURL(mRef);
     }
     const { fatherPhotoFile, motherPhotoFile, ...submitData } = form;
-    await addDoc(collection(db, "reptiles"), { ...submitData, photos: photoUrls, createdAt: serverTimestamp() });
+    await addDoc(collection(db, "reptiles"), {
+      ...submitData,
+      photos: photoUrls,
+      createdAt: serverTimestamp()
+    });
+    alert("개체 등록이 완료되었습니다! 🦎");
     router.push('/');
-  } catch (e) { alert("오류 발생"); }
-  finally { loading.value = false; }
+  } catch (err) {
+    console.error(err);
+    alert("등록 중 오류가 발생했습니다.");
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 
 <style scoped>
-/* [핵심] 모든 요소에 박스 크기 계산 방식 고정 */
+/* [핵심] 레이아웃 깨짐 방지 강제 설정 */
 * { box-sizing: border-box !important; }
 
 .reg-container { 
@@ -349,64 +379,101 @@ const handleRegister = async () => {
 .back-btn { position: absolute; left: 15px; background: none; border: none; font-size: 20px; color: #555; cursor: pointer; }
 .reg-content { padding: 24px; }
 
-/* 섹션 공통 */
-.section { margin-bottom: 28px; width: 100%; }
+/* 섹션 공통 스타일 */
+.section { margin-top: 20px;margin-bottom: 28px; width: 100%; }
 .section-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; display: block; color: #444; }
+.section-desc { font-size: 12px; color: #999; margin-bottom: 12px; }
 
-/* [해칭일 & 체중] 겹침 방지 가로 배치 */
-.section-row { display: flex; gap: 15px; width: 100%; }
-.row-item { flex: 1; min-width: 0; }
+/* 가로 배치 고정 레이아웃 */
+.section-row, .parent-grid { display: flex; gap: 15px; width: 100%; flex-wrap: nowrap !important; }
+.row-item, .parent-column { flex: 1; min-width: 0; }
 
-/* 메인 인풋 스타일 */
-.main-input { 
-  width: 100%; height: 48px; padding: 0 14px; border: 1px solid #e1e1e1; border-radius: 12px; background: #f8f9fa; font-size: 15px; outline: none; 
-}
-
-/* 체중 단위 정렬 */
+/* 인풋 및 박스 모델 보정 */
+.main-input { width: 100%; height: 48px; padding: 0 16px; border: 1px solid #e1e1e1; border-radius: 12px; background: #f8f9fa; font-size: 15px; outline: none; transition: 0.2s; }
+.main-input:focus { border-color: #3182f6; background: #fff; }
 .input-with-unit { position: relative; width: 100%; }
 .p-right { padding-right: 35px !important; }
-.unit-text { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #adb5bd; font-weight: 600; }
+.unit-text { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #adb5bd; font-weight: 600; }
 
-/* [종 & 모프 선택 - 디자인 복구] */
-.morph-trigger-box { border: 1px solid #e1e1e1; border-radius: 12px; background: #f8f9fa; padding: 12px 14px; cursor: pointer; min-height: 58px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+/* 종 & 모프 메인 트리거 디자인 */
+.morph-trigger-box { border: 1px solid #e1e1e1; border-radius: 12px; background: #f8f9fa; padding: 12px 14px; cursor: pointer; min-height: 58px; display: flex; align-items: center; }
 .selected-display { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .species-badge { background: #333; color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-.selected-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip-tag { background: #eef5ff; color: #3182f6; padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: 600; border: 1px solid #d0e3ff; }
+.chip-tag { background: #eef5ff; color: #3182f6; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #d0e3ff; }
+.placeholder { color: #bbb; font-size: 15px; }
 
-/* [부모 정보 박스 디자인 복구] */
-.parent-grid { display: flex; gap: 12px; width: 100%; }
-.parent-column { flex: 1; min-width: 0; }
+/* 부모 정보 박스 디자인 복구 */
 .parent-box-styled { 
   width: 100%; height: 100px; background-color: #f8f9fa; border-radius: 12px; border: 1px solid #f0f0f0; 
   display: flex; flex-direction: column; align-items: center; justify-content: center; 
-  cursor: pointer; position: relative; overflow: hidden;
+  cursor: pointer; position: relative; overflow: hidden; box-sizing: border-box;
 }
+.p-empty { text-align: center; }
+.empty-txt { font-size: 12px; color: #adb5bd; display: block; margin-bottom: 5px; }
+.help-circle { width: 22px; height: 22px; border-radius: 50%; background: #dee2e6; color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 .p-label-overlay { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.5); padding: 5px 0; text-align: center; }
 .p-name-txt { color: #fff; font-weight: 700; font-size: 13px; }
-.help-circle { width: 22px; height: 22px; border-radius: 50%; background: #dee2e6; color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; margin-top: 5px; }
 
-/* [모달 칩 버튼 - 디자인 동기화] */
-.chip-btn {
-  padding: 10px 18px; border-radius: 25px; border: 1px solid #eee;
-  background: #fff; margin: 4px; font-size: 14px; cursor: pointer; color: #555;
+/* 상세 설명 텍스트영역 */
+.main-textarea-fixed { width: 100%; height: 120px; padding: 16px; border: 1px solid #e1e1e1; border-radius: 12px; background: #f8f9fa; font-size: 15px; outline: none; resize: none; box-sizing: border-box; }
+
+/* 모달 및 칩 스타일 */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 2000; }
+.modal-content.full-modal { width: 100%; max-width: 600px; height: 90vh; border-radius: 24px 24px 0 0; background: #fff; display: flex; flex-direction: column; padding: 24px; box-sizing: border-box; }
+.modal-body-scroll { flex: 1; overflow-y: auto; padding: 10px 0; }
+.group-title { font-size: 14px; font-weight: 700; color: #999; margin: 15px 0 10px; }
+
+.chip-btn { 
+  padding: 10px 18px; border-radius: 25px; border: 1px solid #eee; background: #fff; 
+  margin: 4px; font-size: 14px; cursor: pointer; color: #555; transition: 0.2s;
 }
+.chip-btn:hover { background: #f8f9fa; }
 .chip-btn.selected { background: #eef5ff; color: #3182f6; border-color: #3182f6; font-weight: 700; }
 
-/* 모달 하단 버튼 */
+/* 종 변경 및 배너 */
+.selected-banner { background: #f8f9fa; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border: 1px solid #eee; }
+.change-btn-styled { padding: 6px 14px; background: #fff; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; color: #666; cursor: pointer; }
+
+/* 부모 모달 탭 및 검색 */
+.parent-tabs-styled { display: flex; gap: 15px; border-bottom: 1px solid #eee; margin-top: 10px; }
+.tab-btn-styled { background: none; border: none; padding: 10px 5px; color: #bbb; font-weight: 600; cursor: pointer; position: relative; font-size: 15px; }
+.tab-btn-styled.active { color: #3182f6; }
+.tab-btn-styled.active::after { content: ""; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: #3182f6; }
+.search-input-styled { width: 100%; height: 44px; background: #f1f3f5; border: 1px solid #eee; border-radius: 10px; padding: 0 15px; margin: 15px 0; outline: none; }
+
+/* 직접 등록 수동 입력 */
+.manual-photo-box { width: 110px; height: 110px; background: #f8f9fa; border: 2px dashed #eee; border-radius: 15px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; text-align: center; color: #aaa; font-size: 12px; }
+.preview-img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 세그먼트 컨트롤 */
+.segmented-control { display: flex; gap: 6px; background: #f1f3f5; padding: 4px; border-radius: 12px; }
+.segmented-control button { flex: 1; padding: 12px 0; border: none; border-radius: 10px; background: transparent; color: #888; font-weight: 600; cursor: pointer; font-size: 14px; }
+.segmented-control button.active { background: #3182f6; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+/* 하단 푸터 버튼 */
 .modal-footer { display: flex; gap: 10px; padding: 20px 0; border-top: 1px solid #eee; margin-top: auto; }
-.m-btn { flex: 1; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; }
+.m-btn { flex: 1; padding: 16px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; font-size: 15px; }
 .m-btn.reset { background: #f1f3f5; color: #666; }
 .m-btn.apply { background: #3182f6; color: #fff; flex: 2; }
 
-/* 기타 UI */
-.segmented-control { display: flex; gap: 6px; background: #f1f3f5; padding: 4px; border-radius: 12px; }
-.segmented-control button { flex: 1; padding: 12px 0; border: none; border-radius: 10px; background: transparent; color: #888; font-weight: 600; cursor: pointer; }
-.segmented-control button.active { background: #3182f6; color: white; }
-
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 2000; }
-.modal-content.full-modal { width: 100%; max-width: 600px; height: 90vh; border-radius: 24px 24px 0 0; background: #fff; display: flex; flex-direction: column; padding: 24px; }
-.modal-body-scroll { flex: 1; overflow-y: auto; }
-
 .submit-btn { width: 100%; padding: 18px; background: #42b883; color: white; border: none; border-radius: 12px; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+.submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+/* 사진 그리드 보정 */
+.photo-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.photo-box { width: 85px; height: 85px; border-radius: 12px; overflow: hidden; position: relative; border: 1px solid #eee; }
+.photo-box img { width: 100%; height: 100%; object-fit: cover; }
+.remove-p { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.5); color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; }
+.upload-box { width: 85px; height: 85px; background: #f8f9fa; border: 1px solid #eee; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; text-align: center; }
+.upload-icon { color: #bbb; font-size: 11px; }
+.camera-emoji { font-size: 20px; display: block; margin-bottom: 2px; }
+
+/* 부모 리스트 아이템 디자인 */
+.p-list-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #f8f9fa; cursor: pointer; transition: 0.2s; }
+.p-list-item:hover { background: #f1f3f5; }
+.p-img-mini { width: 44px; height: 44px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; font-size: 18px; overflow: hidden; flex-shrink: 0; }
+.p-info-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.p-name { font-weight: 700; font-size: 15px; color: #333; }
+.p-morphs { font-size: 12px; color: #999; }
+.p-select-indicator { color: #3182f6; font-weight: 700; font-size: 13px; }
 </style>
