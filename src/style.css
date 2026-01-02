@@ -1,0 +1,17 @@
+/* src/style.css 내용을 아래걸로 싹 교체하세요 */
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+body {
+  margin: 0;
+  display: block; /* 중요: flex로 되어있다면 block으로 변경 */
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#app {
+  width: 100%; /* 부모 너비를 100% 다 쓰게 합니다. */
+}
