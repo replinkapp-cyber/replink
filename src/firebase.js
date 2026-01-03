@@ -4,13 +4,13 @@ import { getStorage } from "firebase/storage";
 import { getAuth, GoogleAuthProvider } from "firebase/auth"; // <--- 여기 GoogleAuthProvider가 꼭 있어야 합니다!
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC_z32P4Y4o5-jvkyqjw2Dx14PIyThO9aU",
-  authDomain: "replink-249dd.firebaseapp.com",
-  projectId: "replink-249dd",
-  storageBucket: "replink-249dd.firebasestorage.app",
-  messagingSenderId: "774208891038",
-  appId: "1:774208891038:web:53d0dcabe6651efaf4b38f",
-  measurementId: "G-8SY3EB40K9"
+  apiKey: "111",
+  authDomain: "111",
+  projectId: "11",
+  storageBucket: "111",
+  messagingSenderId: "11",
+  appId: "1:111",
+  measurementId: "G-11"
 };
 
 const app = initializeApp(firebaseConfig);
