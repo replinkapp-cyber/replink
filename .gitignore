@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Firebase 설정 파일 제외
+src/firebase.js
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
